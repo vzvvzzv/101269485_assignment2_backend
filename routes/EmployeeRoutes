@@ -1,0 +1,81 @@
+const express = require('express');
+const EmployeeModel = require('../models/EmployeeModel');
+
+const router = express.Router()
+
+// get ALL employees
+router.get('/employee', async (req, res) => {
+    EmployeeModel.find({}, (err, employee) => {
+        if(err) res.send({"Error": err.toString()})
+        res.status(200)
+        res.send(employee)
+    })
+    
+})
+
+// get ONE employee by ID
+router.get('/employee/:id', async (req, res) => {
+    // validate request
+    if(!req.body) {
+        return res.status(400).send({
+            message: 'Request body cannot be empty'
+        })
+    }
+    
+    try{
+        const employee = await EmployeeModel.findById(req.params.id)
+        res.status(200)
+        res.send(employee)
+    }catch(err){
+        res.send({'Error': err.toString()})
+    }
+
+})
+
+// add a new employee
+router.post('/employee', async (req, res) => {
+    
+    if(!req.body) {
+        return res.status(400).send({
+            message: "Request body cannot be empty"
+        });
+    }
+
+    const employee = new EmployeeModel(req.body)
+
+    try{
+        await employee.save()
+        res.status(200).send("Employee Added")
+    }catch(err){
+        console.log(err._message)
+        res.status(500).send(err)
+    }
+
+})
+
+// update employee by id
+router.put('/employee/:id', async (req, res) => {
+    if(!req.body) {
+        return res.status(400).send({
+            message: "Request body cannot be empty"
+        });
+    }
+    EmployeeModel.findByIdAndUpdate(req.params.id, {first_name: req.body.first_name, last_name: req.body.last_name, email: req.body.email}, (err, employee) => {
+        if(err) res.send({"Error": err.toString()})
+        res.status(200).send("Employee Updated")
+    });
+})
+
+// delete employee by id
+router.delete('/employee/:id', async (req, res) => {
+    
+    try{
+        const employee = await EmployeeModel.findByIdAndDelete(req.params.id)     
+        if(!employee) res.status(404).send({"error": "Item Not Found"})
+        res.status(200).send("Employee Deleted")
+    }catch(err){
+        res.send({"Error": err.toString()})
+    }
+})
+
+module.exports = router
